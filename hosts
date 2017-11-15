@@ -1,0 +1,5 @@
+#[local]
+#localhost ansible_connection=local
+
+[nfs_server]
+192.53.231.250 ansible_user=precom ansible_password=precom ansible_become_pass=precom

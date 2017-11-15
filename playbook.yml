@@ -1,0 +1,63 @@
+---
+
+- hosts: nfs_server
+  any_errors_fatal: true
+  become: yes
+  roles:
+    - ansible-nfs
+
+- hosts: nfs_server
+  any_errors_fatal: true
+  become: yes
+  tasks:
+    - name: "Add ansible Ubuntu repository"
+      apt_repository:
+        repo: ppa:ansible/ansible
+        state: present
+
+    - name: "Install latest version of Ansible"
+      apt:
+        name: ansible
+        state: latest
+        update_cache: yes
+
+    - name: "Install Keychain to load private key at each prompt"
+      apt:
+        name: keychain
+        state: installed
+        update_cache: yes
+
+    - name: "Set keychain config in root bashrc"
+      lineinfile:
+        path: "/root/.bashrc"
+        line: "{{ item }}"
+        owner: root
+        group: root
+        state: present
+        insertafter: EOF
+        create: True
+      with_items:
+        - "keychain ~/.ssh/rsa_github_and_deploy"
+        - ". ~/.keychain/${HOSTNAME}-sh"
+
+    - name: "Copy private key in /root/.ssh/ - (I know it's insecure)"
+      copy:
+        src: "id_rsa_github_and_deploy"
+        dest: "/root/.ssh/rsa_github_and_deploy"
+        owner: root
+        group: root
+        mode: 0400
+
+    - name: "Copy daily cron script to pull ansible roles"
+      copy:
+        src: "git-ansible-roles.sh"
+        dest: "/etc/cron.daily/git-ansible-roles.sh"
+        owner: root
+        group: root
+      register: crontab_state
+
+    - name: "Restart Cron service if cron files changed"
+      service:
+        name: cron
+        state: restarted
+      when: crontab_state|changed
