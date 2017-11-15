@@ -1,0 +1,3 @@
+---
+# vars file for ansible-nfs
+nfs_config_file: /etc/exports

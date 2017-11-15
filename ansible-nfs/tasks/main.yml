@@ -1,0 +1,33 @@
+---
+# tasks file for nfs-server
+- name: Create directory for NFS data
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - "{{ export_directories }}"
+
+- name: Install nfs packages
+  apt:
+    name: "{{ item }}"
+    update_cache: yes
+    cache_valid_time: 3600
+  with_items:
+    - nfs-kernel-server
+    - nfs-common
+
+- name: Enabled nfs-server
+  systemd:
+    name: nfs-server
+    enabled: yes
+
+- name: Start nfs-server
+  systemd:
+    name: nfs-server
+    state: started
+
+- name: Upload config file
+  template:
+    src: exports.j2
+    dest: /etc/exports
+  notify: restart nfs

@@ -1,0 +1,6 @@
+---
+# defaults file for ansible-nfs
+
+#Installation variables
+export_directories:
+  - "/data/dockerfiles"
